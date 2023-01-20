@@ -33,7 +33,9 @@ sc.savePreset.slots = [];
 const presetFiles = findPresets('assets/data/save-presets/');
 for (const presetFile of presetFiles) {
 
-	const name = presetFile.name.replace('.json', '');
+	if(!presetFile.name.includes('.')) continue;
+	
+	const name = presetFile.name.slice(0, presetFile.name.lastIndexOf('.'));
 	const category = presetFile.category;
 
 	if (oldNames.includes(name)) {
