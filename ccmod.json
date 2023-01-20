@@ -1,0 +1,8 @@
+{
+	"id": "preset-revival-plus",
+	"version": "2.0.0",
+	"module": true,
+	"title": "Preset Revival Plus",
+	"description": "Brings back the preset menu, which allows you to start the game at a specific point.",
+	"prestart": "prestart.js"
+}
