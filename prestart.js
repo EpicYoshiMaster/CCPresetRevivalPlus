@@ -51,6 +51,7 @@ function findPresets(dir, subDirName, category) {
 	const { resolve } = require('path');
 
 	const directoryItems = fs.readdirSync(dir);
+	const isTopLevelDirectory = !category;
 
 	let files = [];
 	for(const dirItem of directoryItems)
@@ -60,14 +61,14 @@ function findPresets(dir, subDirName, category) {
 
 		if(stat.isDirectory())
 		{
-			if(!category) {
+			if(isTopLevelDirectory) {
 				category = (dirItem.indexOf('-') == 2 && dirItem.length > 3) ? dirItem.substring(3) : dirItem;
 			}
 			files = files.concat(findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, category));
 		}
 		else if(stat.isFile())
 		{
-			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, NO_CATEGORY_NAME));
+			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category ? category : NO_CATEGORY_NAME));
 		}
 	}
 
