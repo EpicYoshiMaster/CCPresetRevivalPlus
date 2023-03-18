@@ -1,9 +1,10 @@
 const NO_CATEGORY_NAME = "No Category";
+const NO_PRESETS_FOUND = "No Presets Found";
 
 sc.TitleScreenButtonGui.inject({
 	init() {
 		this.parent();
-		this._createButton("preset", this.buttons.last().hook.pos.y + 39, 6, () => {
+		this._createButton("preset", this.buttons.last().hook.pos.y + 39, this.buttons.length + 1, () => {
 			this.background.doStateTransition("DEFAULT");
 			this.presetMenu.activate();
 		}, "preset");
@@ -19,7 +20,7 @@ sc.SavePresetData.inject({
 	}
 });
 
-export class PresetFileCategory {
+class PresetFileCategory {
 	constructor(name, category) {
 		this.name = name;
 		this.category = category;
@@ -45,7 +46,7 @@ for (const presetFile of presetFiles) {
 	sc.savePreset.slots.push(new sc.SavePresetData(name, category));
 }
 
-function findPresets(dir, subDirName) {
+function findPresets(dir, subDirName, category) {
 	const fs = require('fs');
 	const { resolve } = require('path');
 
@@ -59,37 +60,14 @@ function findPresets(dir, subDirName) {
 
 		if(stat.isDirectory())
 		{
-			const categoryName = (dirItem.indexOf('-') == 2 && dirItem.length > 3) ? dirItem.substring(3) : dirItem; 
-			files = files.concat(findPresetsRecursive(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, categoryName));
+			if(!category) {
+				category = (dirItem.indexOf('-') == 2 && dirItem.length > 3) ? dirItem.substring(3) : dirItem;
+			}
+			files = files.concat(findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, category));
 		}
 		else if(stat.isFile())
 		{
 			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, NO_CATEGORY_NAME));
-		}
-	}
-
-	return files;
-}
-
-function findPresetsRecursive(dir, subDirName, category) {
-	const fs = require('fs');
-	const { resolve } = require('path');
-
-	const directoryItems = fs.readdirSync(dir);
-
-	let files = [];
-	for(const dirItem of directoryItems)
-	{
-		const itemPath = resolve(dir, dirItem);
-		const stat = fs.lstatSync(itemPath);
-
-		if(stat.isDirectory())
-		{
-			files = files.concat(findPresetsRecursive(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, category));
-		}
-		else if(stat.isFile())
-		{
-			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category));
 		}
 	}
 
@@ -142,11 +120,8 @@ sc.TitlePresetMenu.inject({
 			this.header.setText(this.categoryList[this.currCategoryIndex]);
 		}
 		else {
-			this.header.setText(ig.lang.get("sc.gui.title-screen.preset-empty"));
+			this.header.setText(NO_PRESETS_FOUND);
 		}
-	},
-	update() {
-		this.parent();
 	},
 	setCategoryIndex(index) {
 		let newIndex = index;
@@ -167,7 +142,7 @@ sc.TitlePresetMenu.inject({
 			this.header.setText(this.categoryList[this.currCategoryIndex]);
 		}
 		else {
-			this.header.setText(ig.lang.get("sc.gui.title-screen.preset-empty"));
+			this.header.setText(NO_PRESETS_FOUND);
 		}
 
 		this.createList();
@@ -178,10 +153,10 @@ sc.TitlePresetMenu.inject({
 	onRightPressCheck() {
 		return sc.control.menuCircleRight()
 	},
-	createList: function() {
-		var b = 0,
+	createList() {
+		var lastIndex = 0,
 			a = 0,
-			b = this.itemList.list.buttonGroup.current.y,
+			lastIndex = this.itemList.list.buttonGroup.current.y,
 			a = -this.itemList.list.box.hook.scroll.y;
 
 		this.itemList.list.buttonGroup.clear();
@@ -199,9 +174,9 @@ sc.TitlePresetMenu.inject({
 			this.slots[index] = newPresetButton;
 		}
 
-		b = Math.max(0, Math.min(b, this.itemList.list.getChildren().length));
-		this.itemList.list._prevIndex = b;
-		ig.input.mouseGuiActive ? this.itemList.list.buttonGroup.setCurrentFocus(0, b) : this.itemList.list.buttonGroup.focusCurrentButton(0, b, false, true);
+		lastIndex = Math.max(0, Math.min(lastIndex, this.itemList.list.getChildren().length));
+		this.itemList.list._prevIndex = lastIndex;
+		ig.input.mouseGuiActive ? this.itemList.list.buttonGroup.setCurrentFocus(0, lastIndex) : this.itemList.list.buttonGroup.focusCurrentButton(0, lastIndex, false, true);
 		this.itemList.list.scrollToY(a, true)
 	}
 });
