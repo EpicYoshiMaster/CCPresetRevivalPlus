@@ -180,3 +180,22 @@ sc.TitlePresetMenu.inject({
 		this.itemList.list.scrollToY(a, true)
 	}
 });
+
+sc.SavePreset.inject({
+	load(a) {
+		ig.storage.lastPreset = ig.copy(this.slots[a].saveSlot);
+		ig.storage.lastUsedSlot = -3;
+		this.parent(a);
+	}
+});
+
+ig.Storage.inject({
+	loadSlot(a, b) {
+		//-3 indicates we want to load the last preset used
+		if(typeof a == "number" && a === -3) {
+			a = this.lastPreset;
+		}	
+
+		this.parent(a, b);
+	}
+});
