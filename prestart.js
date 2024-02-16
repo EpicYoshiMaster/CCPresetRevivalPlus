@@ -4,7 +4,7 @@ const NO_PRESETS_FOUND = "No Presets Found";
 sc.TitleScreenButtonGui.inject({
 	init() {
 		this.parent();
-		this._createButton("preset", this.buttons.last().hook.pos.y + 39, this.buttons.length + 1, () => {
+		this._createButton("preset", this.buttons.last().hook.pos.y + 39, 100 - this.buttons.length, () => {
 			this.background.doStateTransition("DEFAULT");
 			this.presetMenu.activate();
 		}, "preset");
