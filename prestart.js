@@ -1,5 +1,15 @@
 const NO_CATEGORY_NAME = "No Category";
 const NO_PRESETS_FOUND = "No Presets Found";
+const FILE_NUMBER_REGEX = /[0-9]+\-/g;
+
+const oldNames = ["0-before-boss", "1-rhombus-dng-start", "2-continue-story", "3-autumn-rise", "4-apollo-duel", "5-before-bergen", "6-before-maroon", "7-fajro-temple", "8-autumns-fall"];
+
+class PresetFileCategory {
+	constructor(name, category) {
+		this.name = name;
+		this.category = category;
+	}
+}
 
 sc.TitleScreenButtonGui.inject({
 	init() {
@@ -20,14 +30,31 @@ sc.SavePresetData.inject({
 	}
 });
 
-class PresetFileCategory {
-	constructor(name, category) {
-		this.name = name;
-		this.category = category;
-	}
-}
+function findPresets(dir, subDirName, category) {
+	const fs = require('fs');
+	const { resolve } = require('path');
 
-const oldNames = ["0-before-boss", "1-rhombus-dng-start", "2-continue-story", "3-autumn-rise", "4-apollo-duel", "5-before-bergen", "6-before-maroon", "7-fajro-temple", "8-autumns-fall"];
+	const directoryItems = fs.readdirSync(dir);
+
+	return directoryItems.flatMap((dirItem) => {
+		const itemPath = resolve(dir, dirItem);
+		const stat = fs.lstatSync(itemPath);
+
+		if(stat.isDirectory())
+		{
+			const trimmedDirItem = dirItem.replace(FILE_NUMBER_REGEX, ''); //ex. 023-Temple Mine => Temple Mine
+			const newCategory = category ? `${category} - ${trimmedDirItem}` : trimmedDirItem; 
+
+			return findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, newCategory);
+		}
+		else if(stat.isFile())
+		{
+			return new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category ? category : NO_CATEGORY_NAME);
+		}
+
+		return [];
+	});
+}
 
 sc.savePreset.slots = [];
 
@@ -44,35 +71,6 @@ for (const presetFile of presetFiles) {
 	}
 
 	sc.savePreset.slots.push(new sc.SavePresetData(name, category));
-}
-
-function findPresets(dir, subDirName, category) {
-	const fs = require('fs');
-	const { resolve } = require('path');
-
-	const directoryItems = fs.readdirSync(dir);
-	const isTopLevelDirectory = !category;
-
-	let files = [];
-	for(const dirItem of directoryItems)
-	{
-		const itemPath = resolve(dir, dirItem);
-		const stat = fs.lstatSync(itemPath);
-
-		if(stat.isDirectory())
-		{
-			if(isTopLevelDirectory) {
-				category = (dirItem.indexOf('-') == 2 && dirItem.length > 3) ? dirItem.substring(3) : dirItem;
-			}
-			files = files.concat(findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, category));
-		}
-		else if(stat.isFile())
-		{
-			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category ? category : NO_CATEGORY_NAME));
-		}
-	}
-
-	return files;
 }
 
 sc.TitlePresetMenu.inject({
