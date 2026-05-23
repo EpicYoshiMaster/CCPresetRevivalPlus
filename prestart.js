@@ -36,7 +36,9 @@ function findPresets(dir, subDirName, category) {
 
 	const directoryItems = fs.readdirSync(dir);
 
-	return directoryItems.flatMap((dirItem) => {
+	let files = [];
+
+	for(const dirItem of directoryItems) {
 		const itemPath = resolve(dir, dirItem);
 		const stat = fs.lstatSync(itemPath);
 
@@ -45,15 +47,15 @@ function findPresets(dir, subDirName, category) {
 			const trimmedDirItem = dirItem.replace(FILE_NUMBER_REGEX, ''); //ex. 023-Temple Mine => Temple Mine
 			const newCategory = category ? `${category} - ${trimmedDirItem}` : trimmedDirItem; 
 
-			return findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, newCategory);
+			files = files.concat(findPresets(itemPath, subDirName ? (subDirName + '/' + dirItem) : dirItem, newCategory));
 		}
 		else if(stat.isFile())
 		{
-			return new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category ? category : NO_CATEGORY_NAME);
+			files.push(new PresetFileCategory(subDirName ? (subDirName + '/' + dirItem) : dirItem, category ? category : NO_CATEGORY_NAME));
 		}
+	}
 
-		return [];
-	});
+	return files;
 }
 
 sc.savePreset.slots = [];
